@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  # ── PostgreSQL + pgvector ───────────────────────────────────
+  fingerprint-db:
+    image: pgvector/pgvector:pg16
+    container_name: fingerprint-db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-fingerprint}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-fingerprint123}
+      POSTGRES_DB: ${DB_NAME:-fingerprint_db}
+    volumes:
+      - fingerprint_pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fingerprint"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── MinIO (S3 Object Storage) ──────────────────────────────
+  fingerprint-minio:
+    image: minio/minio:latest
+    container_name: fingerprint-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Web Console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - fingerprint_minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── MinIO bucket init ──────────────────────────────────────
+  # Cấu trúc:
+  #   fingerprint-models/<type>/<name>_<version>/model.onnx
+  #     ví dụ: embedding/embedding_v1/model.onnx
+  #            matching/matching_v1/model.onnx
+  #            pad/pad_v1/model.onnx
+  #   fingerprint-images/  ← data lake, flat (đổ hết ảnh vào)
+  minio-init:
+    image: minio/mc:latest
+    container_name: fingerprint-minio-init
+    depends_on:
+      fingerprint-minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set myminio http://fingerprint-minio:9000 $${MINIO_ACCESS_KEY:-minioadmin} $${MINIO_SECRET_KEY:-minioadmin123};
+        mc mb --ignore-existing myminio/fingerprint-models;
+        mc mb --ignore-existing myminio/fingerprint-images;
+        echo '' | mc pipe myminio/fingerprint-models/embedding/.keep;
+        echo '' | mc pipe myminio/fingerprint-models/matching/.keep;
+        echo '' | mc pipe myminio/fingerprint-models/pad/.keep;
+        echo '✅ MinIO buckets + folder structure created';
+      "
+
+  # ── Mosquitto MQTT Broker ──────────────────────────────────
+  # Bỏ comment nếu chưa cài Mosquitto trên host
+  # fingerprint-mqtt:
+  #   image: eclipse-mosquitto:2
+  #   container_name: fingerprint-mqtt
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1883:1883"
+  #   volumes:
+  #     - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+volumes:
+  fingerprint_pgdata:
+  fingerprint_minio_data:
