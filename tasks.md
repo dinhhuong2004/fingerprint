@@ -15,9 +15,9 @@
 | Task                                                              | Assign | Done |
 | ----------------------------------------------------------------- | ------ | ---- |
 | Cài đặt và cấu hình Apache Kafka làm message buffer               |        | [ ]  |
-| Cài đặt và cấu hình Cassandra lưu trữ time-series log             |        | [ ]  |
+| Cài đặt và cấu hình Cassandra lưu trữ time-series log             |        | [x]  |
 | Tích hợp Worker gửi log quẹt thẻ (nhẹ) qua MQTT/Backend lên Kafka |        | [ ]  |
-| Viết Spark job / Pipeline phân tích dữ liệu log thẻ từ Cassandra  |        | [ ]  |
+| Viết Spark job / Pipeline phân tích dữ liệu log thẻ từ Cassandra  |        | [x]  |
 
 ## 3. Orchestrator (Máy chủ Trung tâm)
 
