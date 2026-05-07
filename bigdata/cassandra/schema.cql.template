@@ -1,0 +1,19 @@
+CREATE KEYSPACE IF NOT EXISTS fingerprint_logs
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE fingerprint_logs;
+
+CREATE TABLE IF NOT EXISTS worker_event_logs_by_day (
+    worker_id text,
+    event_day date,
+    event_time timestamp,
+    event_id uuid,
+    event_type text,
+    user_id text,
+    result text,
+    latency_ms int,
+    metadata_json text,
+    PRIMARY KEY ((worker_id, event_day), event_time, event_id)
+)
+WITH CLUSTERING ORDER BY (event_time DESC, event_id ASC)
+  AND default_time_to_live = __DEFAULT_TTL__;

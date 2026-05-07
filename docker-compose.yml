@@ -76,6 +76,56 @@ services:
   #   volumes:
   #     - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
+  # ── Cassandra (time-series logs) ───────────────────────────
+  fingerprint-cassandra:
+    image: cassandra:4.1
+    container_name: fingerprint-cassandra
+    restart: unless-stopped
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: fingerprint-cluster
+      CASSANDRA_NUM_TOKENS: 16
+    volumes:
+      - fingerprint_cassandra_data:/var/lib/cassandra
+      - ./bigdata/cassandra:/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  # ── Cassandra schema init (auto) ───────────────────────────
+  fingerprint-cassandra-init:
+    image: cassandra:4.1
+    container_name: fingerprint-cassandra-init
+    depends_on:
+      fingerprint-cassandra:
+        condition: service_healthy
+    environment:
+      CASSANDRA_HOST: fingerprint-cassandra
+      CASSANDRA_PORT: 9042
+      CASSANDRA_LOG_TTL_SECONDS: ${CASSANDRA_LOG_TTL_SECONDS:-7776000}
+      SCHEMA_TEMPLATE_PATH: /cassandra/schema.cql.template
+    volumes:
+      - ./bigdata/cassandra:/cassandra
+    entrypoint: ["/bin/bash", "/cassandra/apply_schema.sh"]
+    restart: "no"
+
+  # ── Spark container (run PySpark batch job) ────────────────
+  fingerprint-spark:
+    image: apache/spark:3.5.1
+    container_name: fingerprint-spark
+    depends_on:
+      fingerprint-cassandra:
+        condition: service_healthy
+    volumes:
+      - ./bigdata/spark:/opt/spark-apps
+      - ./outputs:/opt/spark-outputs
+    command: ["/bin/bash", "-lc", "sleep infinity"]
+
 volumes:
   fingerprint_pgdata:
   fingerprint_minio_data:
+  fingerprint_cassandra_data:

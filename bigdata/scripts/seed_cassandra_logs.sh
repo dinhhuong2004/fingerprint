@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+cd "$ROOT_DIR"
+docker compose exec -T fingerprint-cassandra cqlsh 127.0.0.1 9042 -f /cassandra/seed.cql
+
+echo "Seed data inserted into fingerprint_logs.worker_event_logs_by_day"

@@ -175,6 +175,7 @@ Chạy dưới dạng Docker Compose tại máy orchestrator.
 
 | File                           | Nội dung                                |
 | ------------------------------ | --------------------------------------- |
+| [bigdata/README.md](./bigdata/README.md) | Hướng dẫn Cassandra + Spark pipeline      |
 | [work_flow.md](./work_flow.md) | Workflow diagrams — các luồng hoạt động |
 | [operation.md](./operation.md) | Hướng dẫn vận hành, cài đặt, cấu hình   |
 | [tasks.md](./tasks.md)         | Danh sách công việc đã thực hiện        |
