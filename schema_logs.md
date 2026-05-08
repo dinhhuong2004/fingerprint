@@ -29,3 +29,9 @@ Lưu lại lịch sử của mọi lần đặt tay lên máy quét (dùng cho �
 | `device_id` | `str` | `""` | Mã thiết bị Jetson/Worker (`WORKER_DEVICE_ID`) |
 | `timestamp` | `str` (ISO 8601) | `utcnow()` | Thời gian quét (UTC) |
 | `probe_quality` | `float` | `0.0` | Điểm chất lượng ảnh vân tay từ cảm biến |
+
+### Ghi chú mapping ID
+
+- `ActivityLog.user_id` dùng kiểu `str` để lưu **mã nghiệp vụ** (business user code, ví dụ `EMP001`).
+- `VerificationLog.matched_user_id` dùng kiểu `int` để lưu **khóa nội bộ** (primary key số nguyên) của bản ghi user đã match.
+- `VerificationLog.matched_fp_id` tham chiếu tới khóa chính bản ghi fingerprint trong bảng dữ liệu vân tay (ví dụ bảng `fingerprints`).
